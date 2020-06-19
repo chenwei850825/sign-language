@@ -41,11 +41,11 @@ bOflow = True
     "fDurationAvg" : 3.0} # seconds
 """
 
-diVideoSet = {"sName" : "chalearn",
-    "nClasses" : 249,   # number of classes
-    "nFramesNorm" : 40,    # number of frames per video
-    "nMinDim" : 240,   # smaller dimension of saved video-frames
-    "tuShape" : (240, 320), # height, width
+diVideoSet = {"sName" : "tsl",
+    "nClasses" : 63,   # number of classes
+    "nFramesNorm" : 200,    # number of frames per video
+    "nMinDim" : 480,   # smaller dimension of saved video-frames
+    "tuShape" : (600, 480), # height, width
     "nFpsAvg" : 10,
     "nFramesAvg" : 50, 
     "fDurationAvg" : 5.0} # seconds 

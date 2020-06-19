@@ -213,6 +213,7 @@ def videosDir2framesDir(sVideoDir:str, sFrameDir:str, nFramesNorm:int = None,
     #    return 
 
     # get videos. Assume sVideoDir / train / class / video.mp4
+    print(sVideoDir)
     dfVideos = pd.DataFrame(sorted(glob.glob(sVideoDir + "/*/*/*.*")), columns=["sVideoPath"])
     print("Located {} videos in {}, extracting to {} ..."\
         .format(len(dfVideos), sVideoDir, sFrameDir))

@@ -619,7 +619,7 @@ def add_i3d_top(base_model:Model, classes:int, dropout_prob:bool) -> Model:
     x = base_model.output
     predictions = top_model(x)
 
-    new_model = Model(inputs = base_model.input, output = predictions, name = "i3d_with_top")
+    new_model = Model(base_model.input, predictions, name = "i3d_with_top")
 
     return new_model
 

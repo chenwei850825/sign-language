@@ -17,7 +17,7 @@ from keras import backend as K
 
 from datagenerator import VideoClasses, FramesGenerator
 from model_i3d import Inception_Inflated3d, add_i3d_top
-
+import tensorflow as tf
 
 def layers_freeze(keModel:keras.Model) -> keras.Model:
     
@@ -38,10 +38,13 @@ def layers_unfreeze(keModel:keras.Model) -> keras.Model:
 
 def count_params(keModel:keras.Model):
 
-    trainable_count = int(
-        np.sum([K.count_params(p) for p in set(keModel.trainable_weights)]))
-    non_trainable_count = int(
-        np.sum([K.count_params(p) for p in set(keModel.non_trainable_weights)]))
+    #trainable_count = int(
+        #np.sum([K.count_params(p) for p in set(keModel.trainable_weights)]))
+    #non_trainable_count = int(
+        #np.sum([K.count_params(p) for p in set(keModel.non_trainable_weights)]))
+    trainable_count = keras.utils.layer_utils.count_params(keModel.trainable_weights)
+    non_trainable_count = keras.utils.layer_utils.count_params(keModel.non_trainable_weights)
+
 
     print('Total params: {:,}'.format(trainable_count + non_trainable_count))
     print('Trainable params: {:,}'.format(trainable_count))
@@ -80,19 +83,19 @@ def train_I3D_oflow_end2end(diVideoSet):
         "fLearn" : 1e-4,
         "nEpochs" : 17}
 
-    nBatchSize = 4
+    nBatchSize = 2
 
     print("\nStarting I3D end2end training ...")
     print(os.getcwd())
 
     # read the ChaLearn classes
-    oClasses = VideoClasses(sClassFile)
+    #oClasses = VideoClasses(sClassFile)
 
     # Load training data
-    genFramesTrain = FramesGenerator(sOflowDir + "/train", nBatchSize, 
-        diVideoSet["nFramesNorm"], 224, 224, 2, oClasses.liClasses)
-    genFramesVal = FramesGenerator(sOflowDir + "/val", nBatchSize, 
-        diVideoSet["nFramesNorm"], 224, 224, 2, oClasses.liClasses)
+    genFramesTrain = FramesGenerator(sOflowDir + "/train_videos", nBatchSize, 
+        diVideoSet["nFramesNorm"], 224, 224, 2)
+    genFramesVal = FramesGenerator(sOflowDir + "/val_videos", nBatchSize, 
+        diVideoSet["nFramesNorm"], 224, 224, 2)
 
     # Load pretrained i3d model and adjust top layer 
     print("Load pretrained I3D flow model ...")
@@ -100,24 +103,24 @@ def train_I3D_oflow_end2end(diVideoSet):
         include_top=False,
         weights='flow_imagenet_and_kinetics',
         input_shape=(diVideoSet["nFramesNorm"], 224, 224, 2))
-    print("Add top layers with %d output classes ..." % oClasses.nClasses)
+    print("Add top layers with %d output classes ..." % 63)
     keI3DOflow = layers_freeze(keI3DOflow)
-    keI3DOflow = add_i3d_top(keI3DOflow, oClasses.nClasses, dropout_prob=0.5)
+    keI3DOflow = add_i3d_top(keI3DOflow, 63, dropout_prob=0.5)
         
     # Prep logging
     sLog = time.strftime("%Y%m%d-%H%M", time.gmtime()) + \
         "-%s%03d-oflow-i3d"%(diVideoSet["sName"], diVideoSet["nClasses"])
     
     # Helper: Save results
-    csv_logger = keras.callbacks.CSVLogger("log/" + sLog + "-acc.csv", append = True)
+    csv_logger = tf.keras.callbacks.CSVLogger("log/" + sLog + "-acc.csv", append = True)
 
     # Helper: Save the model
     os.makedirs(sModelDir, exist_ok=True)
-    cpTopLast = keras.callbacks.ModelCheckpoint(filepath = sModelDir + "/" + sLog + "-above-last.h5", verbose = 0)
-    cpTopBest = keras.callbacks.ModelCheckpoint(filepath = sModelDir + "/" + sLog + "-above-best.h5",
+    cpTopLast = tf.keras.callbacks.ModelCheckpoint(filepath = sModelDir + "/" + sLog + "-above-last.h5", verbose = 0)
+    cpTopBest = tf.keras.callbacks.ModelCheckpoint(filepath = sModelDir + "/" + sLog + "-above-best.h5",
         verbose = 1, save_best_only = True)
-    cpAllLast = keras.callbacks.ModelCheckpoint(filepath = sModelDir + "/" + sLog + "-entire-last.h5", verbose = 0)
-    cpAllBest = keras.callbacks.ModelCheckpoint(filepath = sModelDir + "/" + sLog + "-entire-best.h5",
+    cpAllLast = tf.keras.callbacks.ModelCheckpoint(filepath = sModelDir + "/" + sLog + "-entire-last.h5", verbose = 0)
+    cpAllBest = tf.keras.callbacks.ModelCheckpoint(filepath = sModelDir + "/" + sLog + "-entire-best.h5",
         verbose = 1, save_best_only = True)
 
     # Fit top layers
