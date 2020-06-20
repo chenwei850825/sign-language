@@ -39,11 +39,11 @@ from predict import probability2label
 def livedemo():
 	
 	# dataset
-	diVideoSet = {"sName" : "chalearn",
-		"nClasses" : 20,   # number of classes
-		"nFramesNorm" : 40,    # number of frames per video
-		"nMinDim" : 240,   # smaller dimension of saved video-frames
-		"tuShape" : (240, 320), # height, width
+	diVideoSet = {"sName" : "tsl",
+		"nClasses" : 63,   # number of classes
+		"nFramesNorm" : 200,    # number of frames per video
+		"nMinDim" : 480,   # smaller dimension of saved video-frames
+		"tuShape" : (480, 600), # height, width
 		"nFpsAvg" : 10,
 		"nFramesAvg" : 50, 
 		"fDurationAvg" : 5.0} # seconds 
@@ -57,11 +57,11 @@ def livedemo():
 	print(diVideoSet)
 	
 	# load label description
-	oClasses = VideoClasses(sClassFile)
+	#oClasses = VideoClasses(sClassFile)
 
-	sModelFile = "model/20180627-0729-chalearn020-oflow-i3d-entire-best.h5"
+	sModelFile = "model/20200619-0535-tsl063-oflow-i3d-entire-best.h5"
 	h, w = 224, 224
-	keI3D = I3D_load(sModelFile, diVideoSet["nFramesNorm"], (h, w, 2), oClasses.nClasses)
+	keI3D = I3D_load(sModelFile, diVideoSet["nFramesNorm"], (h, w, 2), 63)
 
 	# open a pointer to the webcam video stream
 	oStream = video_start(device = 1, tuResolution = (320, 240), nFramePerSecond = diVideoSet["nFpsAvg"])
