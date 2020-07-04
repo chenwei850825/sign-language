@@ -59,8 +59,8 @@ def livedemo():
 	# load label description
 	#oClasses = VideoClasses(sClassFile)
 
-	#sModelFile = "model/20200619-0535-tsl063-oflow-i3d-entire-best.h5"
-	sModelFile = "model/20180627-0729-chalearn020-oflow-i3d-entire-best.h5"
+	sModelFile = "model/20200619-0535-tsl063-oflow-i3d-entire-best.h5"
+	#sModelFile = "model/20180627-0729-chalearn020-oflow-i3d-entire-best.h5"
 	h, w = 224, 224
 	keI3D = I3D_load(sModelFile, diVideoSet["nFramesNorm"], (h, w, 2), 63)
 
