@@ -73,7 +73,7 @@ def train_I3D_oflow_end2end(diVideoSet):
     sOflowDir        = "data-temp/%s/%s/oflow"%(diVideoSet["sName"], sFolder)
     #sOflowFeatureDir = "data-temp/%s/%s/oflow-i3d"%(diVideoSet["sName"], sFolder)
     
-    sModelDir        = "model"
+    sModelDir        = "model_flow_mirror"
 
     diTrainTop = {
         "fLearn" : 1e-3,
@@ -102,6 +102,7 @@ def train_I3D_oflow_end2end(diVideoSet):
     keI3DOflow = Inception_Inflated3d(
         include_top=False,
         weights='flow_imagenet_and_kinetics',
+        #weights='model/20200704-1221-tsl100-oflow-i3d-entire-best.h5',
         input_shape=(diVideoSet["nFramesNorm"], 224, 224, 2))
     print("Add top layers with %d output classes ..." % 63)
     keI3DOflow = layers_freeze(keI3DOflow)
@@ -112,7 +113,115 @@ def train_I3D_oflow_end2end(diVideoSet):
         "-%s%03d-oflow-i3d"%(diVideoSet["sName"], diVideoSet["nClasses"])
     
     # Helper: Save results
-    csv_logger = tf.keras.callbacks.CSVLogger("log/" + sLog + "-acc.csv", append = True)
+    csv_logger = tf.keras.callbacks.CSVLogger("log_flow_mirror/" + sLog + "-acc_above.csv", append = True)
+
+    # Helper: Save the model
+    os.makedirs(sModelDir, exist_ok=True)
+    cpTopLast = tf.keras.callbacks.ModelCheckpoint(filepath = sModelDir + "/" + sLog + "-above-last.h5", verbose = 0)
+    cpTopBest = tf.keras.callbacks.ModelCheckpoint(filepath = sModelDir + "/" + sLog + "-above-best.h5",
+        verbose = 1, save_best_only = True)
+    cpAllLast = tf.keras.callbacks.ModelCheckpoint(filepath = sModelDir + "/" + sLog + "-entire-last.h5", verbose = 0)
+    cpAllBest = tf.keras.callbacks.ModelCheckpoint(filepath = sModelDir + "/" + sLog + "-entire-best.h5",
+        verbose = 1, save_best_only = True)
+
+    # Fit top layers
+    print("Fit I3D top layers with generator: %s" % (diTrainTop))
+    optimizer = keras.optimizers.Adam(lr = diTrainTop["fLearn"])
+    keI3DOflow.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
+    count_params(keI3DOflow)    
+
+    keI3DOflow.fit_generator(
+        generator = genFramesTrain,
+        validation_data = genFramesVal,
+        epochs = diTrainTop["nEpochs"],
+        workers = 4,                 
+        use_multiprocessing = True,
+        max_queue_size = 8, 
+        verbose = 1,
+        callbacks=[csv_logger, cpTopLast, cpTopBest])
+    
+    # Fit entire I3D model
+    print("Finetune all I3D layers with generator: %s" % (diTrainAll))
+    csv_logger = tf.keras.callbacks.CSVLogger("log_flow_mirror/" + sLog + "-acc_entire.csv", append = True)   
+    keI3DOflow = layers_unfreeze(keI3DOflow)
+    optimizer = keras.optimizers.Adam(lr = diTrainAll["fLearn"])
+    keI3DOflow.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
+    count_params(keI3DOflow) 
+
+    keI3DOflow.fit_generator(
+        generator = genFramesTrain,
+        validation_data = genFramesVal,
+        epochs = diTrainAll["nEpochs"],
+        workers = 4,                 
+        use_multiprocessing = True,
+        max_queue_size = 8, 
+        verbose = 1,
+        callbacks=[csv_logger, cpAllLast, cpAllBest])
+
+    return
+    
+
+
+
+def train_I3D_rgb_end2end(diVideoSet):
+    """ 
+    * Loads pretrained I3D model, 
+    * reads optical flow data generated from training videos,
+    * adjusts top-layers adequately for video data,
+    * trains only news top-layers,
+    * then fine-tunes entire neural network,
+    * saves logs and models to disc.
+    """
+   
+    # directories
+    sFolder = "%03d-%d"%(diVideoSet["nClasses"], diVideoSet["nFramesNorm"])
+    sClassFile       = "data-set/%s/%03d/class.csv"%(diVideoSet["sName"], diVideoSet["nClasses"])
+    #sVideoDir        = "data-set/%s/%03d"%(diVideoSet["sName"], diVideoSet["nClasses"])
+    sImageDir        = "data-temp/%s/%s/image"%(diVideoSet["sName"], sFolder)
+    #sImageFeatureDir = "data-temp/%s/%s/image-i3d"%(diVideoSet["sName"], sFolder)
+    #sOflowDir        = "data-temp/%s/%s/oflow"%(diVideoSet["sName"], sFolder)
+    #sOflowFeatureDir = "data-temp/%s/%s/oflow-i3d"%(diVideoSet["sName"], sFolder)
+    
+    sModelDir        = "model_rgb_mirror"
+
+    diTrainTop = {
+        "fLearn" : 1e-3,
+        "nEpochs" : 3}
+
+    diTrainAll = {
+        "fLearn" : 1e-4,
+        "nEpochs" : 17}
+
+    nBatchSize = 2
+
+    print("\nStarting I3D end2end training ...")
+    print(os.getcwd())
+
+    # read the ChaLearn classes
+    #oClasses = VideoClasses(sClassFile)
+
+    # Load training data
+    genFramesTrain = FramesGenerator(sImageDir + "/train_videos", nBatchSize, 
+        diVideoSet["nFramesNorm"], 224, 224, 3)
+    genFramesVal = FramesGenerator(sImageDir + "/val_videos", nBatchSize, 
+        diVideoSet["nFramesNorm"], 224, 224, 3)
+
+    # Load pretrained i3d model and adjust top layer 
+    print("Load pretrained I3D flow model ...")
+    keI3DOflow = Inception_Inflated3d(
+        include_top=False,
+        weights='rgb_imagenet_and_kinetics',
+        input_shape=(diVideoSet["nFramesNorm"], 224, 224, 3))
+    print("Add top layers with %d output classes ..." % 63)
+    keI3DOflow = layers_freeze(keI3DOflow)
+    keI3DOflow = add_i3d_top(keI3DOflow, 63, dropout_prob=0.5)
+        
+    # Prep logging
+    sLog = time.strftime("%Y%m%d-%H%M", time.gmtime()) + \
+        "-%s%03d-oflow-i3d"%(diVideoSet["sName"], diVideoSet["nClasses"])
+    
+    # Helper: Save results
+    csv_logger = tf.keras.callbacks.CSVLogger("log_rgb_mirror/" + sLog + "-acc.csv", append = True)
 
     # Helper: Save the model
     os.makedirs(sModelDir, exist_ok=True)
@@ -158,7 +267,6 @@ def train_I3D_oflow_end2end(diVideoSet):
 
     return
     
-    
 if __name__ == '__main__':
 
     """diVideoSet = {"sName" : "ledasila",
@@ -170,13 +278,16 @@ if __name__ == '__main__':
         "nFramesAvg" : 75,
         "fDurationAvg" : 3.0} # seconds
     """
-    diVideoSet = {"sName" : "chalearn",
-        "nClasses" : 20,   # number of classes
-        "nFramesNorm" : 40,    # number of frames per video
-        "nMinDim" : 240,   # smaller dimension of saved video-frames
-        "tuShape" : (240, 320), # height, width
-        "nFpsAvg" : 10,
-        "nFramesAvg" : 50, 
-        "fDurationAvG" : 5.0} # seconds 
+
+    diVideoSet = {"sName" : "tsl",
+    "nClasses" : 100,   # number of classes
+    "nFramesNorm" : 200,    # number of frames per video
+    "nMinDim" : 240,   # smaller dimension of saved video-frames
+    "tuShape" : (600, 480), # height, width
+    "nFpsAvg" : 10,
+    "nFramesAvg" : 50, 
+    "fDurationAvg" : 5.0} # seconds 
     
+    
+    train_I3D_rgb_end2end(diVideoSet)
     train_I3D_oflow_end2end(diVideoSet)

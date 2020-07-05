@@ -17,6 +17,9 @@ from sklearn.preprocessing import LabelEncoder
 import keras
 
 from frame import files2frames, images_normalize, frames_show
+from PIL import Image, ImageOps
+import scipy.misc
+
 
 class FramesGenerator(keras.utils.Sequence):
     """Read and yields video frames/optical flow for Keras.model.fit_generator
@@ -95,31 +98,37 @@ class FramesGenerator(keras.utils.Sequence):
         nBatchSize = len(dfVideosBatch)
 
         # initialize arrays
-        arX = np.empty((nBatchSize, ) + self.tuXshape, dtype = float)
-        arY = np.empty((nBatchSize), dtype = int)
+        arX = np.empty((nBatchSize*2,) + self.tuXshape, dtype = float)
+        arY = np.empty((nBatchSize*2), dtype = int)
 
         # Generate data
         for i in range(nBatchSize):
             # generate data for single video(frames)
-            arX[i,], arY[i] = self.__data_generation(dfVideosBatch.iloc[i,:])
+            idx = i * 2
+            arX[idx,], arY[idx], arX[idx+1,], arY[idx+1] = self.__data_generation(dfVideosBatch.iloc[i,:])
             #print("Sample #%d" % (indexes[i]))
 
         # onehot the labels
         return arX, keras.utils.to_categorical(arY, num_classes=self.nClasses)
-
 
     def __data_generation(self, seVideo:pd.Series) -> (np.array(float), int):
         "Returns frames for 1 video, including normalizing & preprocessing"
        
         # Get the frames from disc
         ar_nFrames = files2frames(seVideo.sFrameDir)
+        #print(ar_nFrames.shape)
+        #scipy.misc.imsave('outfile.jpg', ar_nFrames[0])
+        #scipy.misc.imsave('outfile_flip.jpg', np.fliplr(ar_nFrames[0]))
+        ar_nFrames_flip = np.array([np.fliplr(ar_nFrames[i]) for i in range(ar_nFrames.shape[0])])
 
         # only use the first nChannels (typically 3, but maybe 2 for optical flow)
         ar_nFrames = ar_nFrames[..., 0:self.nChannels]
+        ar_nFrames_flip = ar_nFrames_flip[..., 0:self.nChannels]
         
         ar_fFrames = images_normalize(ar_nFrames, self.nFrames, self.nHeight, self.nWidth, bRescale = True)
+        ar_nFrames_flip = images_normalize(ar_nFrames_flip, self.nFrames, self.nHeight, self.nWidth, bRescale = True)
         
-        return ar_fFrames, seVideo.nLabel
+        return ar_fFrames, seVideo.nLabel, ar_nFrames_flip, seVideo.nLabel
 
     def data_generation(self, seVideo:pd.Series) -> (np.array(float), int):
         return self.__data_generation(seVideo)

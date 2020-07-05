@@ -269,8 +269,7 @@ def videosDir2framesDir(sVideoDir:str, sFrameDir:str, nFramesNorm:int = None,
         frames2files(arFrames, sTargetDir)         
 
         print("Video %5d | %5.1f sec | %d frames | %4.1f fps | saved %s in %s" % (nCounter, fVideoSec, nFrames, fFPS, str(arFrames.shape), sTargetDir))
-        nCounter += 1      
-
+        nCounter += 1
     return
 
 
