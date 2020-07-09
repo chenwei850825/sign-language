@@ -19,7 +19,20 @@ import keras
 from frame import files2frames, images_normalize, frames_show
 from PIL import Image, ImageOps
 import scipy.misc
+from tensorflow.python.keras.utils.data_utils import Sequence
 
+class generate_generator_multiple(keras.utils.Sequence):
+    def __init__(self, g1,g2):
+        self.g1 = g1
+        self.g2 = g2
+    
+    def __len__(self):
+        return self.g1.__len__()
+
+    def __getitem__(self, nStep):
+        x1, y1 = self.g1.__getitem__(nStep)
+        x2, y2 = self.g2.__getitem__(nStep)
+        return [x1, x2], y1  #Yield both images and their mutual label
 
 class FramesGenerator(keras.utils.Sequence):
     """Read and yields video frames/optical flow for Keras.model.fit_generator
@@ -29,7 +42,7 @@ class FramesGenerator(keras.utils.Sequence):
 
     def __init__(self, sPath:str, \
         nBatchSize:int, nFrames:int, nHeight:int, nWidth:int, nChannels:int, \
-        liClassesFull:list = None, bShuffle:bool = True):
+        liClassesFull:list = None, bShuffle:bool = True, test_phase:bool = False):
         """
         Assume directory structure:
         ... / sPath / class / videoname / frames.jpg
@@ -43,6 +56,7 @@ class FramesGenerator(keras.utils.Sequence):
         self.nChannels = nChannels
         self.tuXshape = (nFrames, nHeight, nWidth, nChannels)
         self.bShuffle = bShuffle
+        self.test_phase = test_phase
 
         # retrieve all videos = frame directories
         self.dfVideos = pd.DataFrame(sorted(glob.glob(sPath + "/*/*")), columns=["sFrameDir"])
@@ -125,10 +139,12 @@ class FramesGenerator(keras.utils.Sequence):
         ar_nFrames = ar_nFrames[..., 0:self.nChannels]
         ar_nFrames_flip = ar_nFrames_flip[..., 0:self.nChannels]
         
-        ar_fFrames = images_normalize(ar_nFrames, self.nFrames, self.nHeight, self.nWidth, bRescale = True)
+        ar_nFrames = images_normalize(ar_nFrames, self.nFrames, self.nHeight, self.nWidth, bRescale = True)
         ar_nFrames_flip = images_normalize(ar_nFrames_flip, self.nFrames, self.nHeight, self.nWidth, bRescale = True)
+        self.prv_frame = ar_nFrames
+        self.prv_frame_flip = ar_nFrames_flip
         
-        return ar_fFrames, seVideo.nLabel, ar_nFrames_flip, seVideo.nLabel
+        return ar_nFrames, seVideo.nLabel, ar_nFrames_flip, seVideo.nLabel
 
     def data_generation(self, seVideo:pd.Series) -> (np.array(float), int):
         return self.__data_generation(seVideo)

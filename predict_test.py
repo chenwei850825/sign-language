@@ -20,15 +20,25 @@ from model_i3d import Inception_Inflated3d, add_i3d_top
 #sFolder = "%03d-%d"%(63, 200)
 sFolder = "%03d-%d"%(100, 200)
 sOflowDir  = "data-temp/%s/%s/oflow"%('tsl', sFolder)
+sImageDir  = "data-temp/%s/%s/image"%('tsl', sFolder)
+
 genFramesTest = FramesGenerator(sOflowDir + "/test_videos", 1, 
         200, 224, 224, 2, bShuffle=False)
+#genFramesTest = FramesGenerator(sImageDir + "/test_videos", 1, 
+        #200, 224, 224, 3, bShuffle=False, test_phase=True)
 label = genFramesTest.dfVideos["sLabel"].tolist()
 
-#sModelFile = "model/20200619-0535-tsl063-oflow-i3d-entire-best.h5"
-sModelFile = "model/20200704-1221-tsl100-oflow-i3d-entire-best.h5"
+
+
+sModelFile = "model_flow_mirror/20200706-0517-tsl100-oflow-i3d-entire-best.h5"
+#sModelFile = "model/20200704-1221-tsl100-oflow-i3d-entire-best.h5"
+#sModelFile = "model_rgb_mirror/20200705-1748-tsl100-oflow-i3d-entire-best.h5"
+#sModelFile = "model_rgb_diff_mirror/20200707-1608-tsl100-oflow-i3d-entire-best.h5"
+
 
 h, w = 224, 224
 keI3D = I3D_load(sModelFile, 200, (h, w, 2), 63)
+#keI3D = I3D_load(sModelFile, 200, (h, w, 3), 63)
 
 
 nTop = 3

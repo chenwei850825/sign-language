@@ -29,6 +29,7 @@ from keras.layers import Dropout
 from keras.layers import Reshape
 from keras.layers import Lambda
 from keras.layers import GlobalAveragePooling3D
+from keras.layers import Concatenate
 
 from keras.engine.topology import get_source_inputs
 from keras.utils import layer_utils
@@ -235,7 +236,8 @@ def Inception_Inflated3d(include_top=True,
                 input_shape=None,
                 dropout_prob=0.0,
                 endpoint_logit=True,
-                classes=400):
+                classes=400, 
+                layer_name=''):
     """Instantiates the Inflated 3D Inception v1 architecture.
 
     Optionally loads weights pre-trained
@@ -325,184 +327,184 @@ def Inception_Inflated3d(include_top=True,
         channel_axis = 4
 
     # Downsampling via convolution (spatial and temporal)
-    x = conv3d_bn(img_input, 64, 7, 7, 7, strides=(2, 2, 2), padding='same', name='Conv3d_1a_7x7')
+    x = conv3d_bn(img_input, 64, 7, 7, 7, strides=(2, 2, 2), padding='same', name=f'{layer_name}Conv3d_1a_7x7')
 
     # Downsampling (spatial only)
-    x = MaxPooling3D((1, 3, 3), strides=(1, 2, 2), padding='same', name='MaxPool2d_2a_3x3')(x)
-    x = conv3d_bn(x, 64, 1, 1, 1, strides=(1, 1, 1), padding='same', name='Conv3d_2b_1x1')
-    x = conv3d_bn(x, 192, 3, 3, 3, strides=(1, 1, 1), padding='same', name='Conv3d_2c_3x3')
+    x = MaxPooling3D((1, 3, 3), strides=(1, 2, 2), padding='same', name=f'{layer_name}MaxPool2d_2a_3x3')(x)
+    x = conv3d_bn(x, 64, 1, 1, 1, strides=(1, 1, 1), padding='same', name=f'{layer_name}Conv3d_2b_1x1')
+    x = conv3d_bn(x, 192, 3, 3, 3, strides=(1, 1, 1), padding='same', name=f'{layer_name}Conv3d_2c_3x3')
 
     # Downsampling (spatial only)
-    x = MaxPooling3D((1, 3, 3), strides=(1, 2, 2), padding='same', name='MaxPool2d_3a_3x3')(x)
+    x = MaxPooling3D((1, 3, 3), strides=(1, 2, 2), padding='same', name=f'{layer_name}MaxPool2d_3a_3x3')(x)
 
     # Mixed 3b
-    branch_0 = conv3d_bn(x, 64, 1, 1, 1, padding='same', name='Conv3d_3b_0a_1x1')
+    branch_0 = conv3d_bn(x, 64, 1, 1, 1, padding='same', name=f'{layer_name}Conv3d_3b_0a_1x1')
 
-    branch_1 = conv3d_bn(x, 96, 1, 1, 1, padding='same', name='Conv3d_3b_1a_1x1')
-    branch_1 = conv3d_bn(branch_1, 128, 3, 3, 3, padding='same', name='Conv3d_3b_1b_3x3')
+    branch_1 = conv3d_bn(x, 96, 1, 1, 1, padding='same', name=f'{layer_name}Conv3d_3b_1a_1x1')
+    branch_1 = conv3d_bn(branch_1, 128, 3, 3, 3, padding='same', name=f'{layer_name}Conv3d_3b_1b_3x3')
 
-    branch_2 = conv3d_bn(x, 16, 1, 1, 1, padding='same', name='Conv3d_3b_2a_1x1')
-    branch_2 = conv3d_bn(branch_2, 32, 3, 3, 3, padding='same', name='Conv3d_3b_2b_3x3')
+    branch_2 = conv3d_bn(x, 16, 1, 1, 1, padding='same', name=f'{layer_name}Conv3d_3b_2a_1x1')
+    branch_2 = conv3d_bn(branch_2, 32, 3, 3, 3, padding='same', name=f'{layer_name}Conv3d_3b_2b_3x3')
 
-    branch_3 = MaxPooling3D((3, 3, 3), strides=(1, 1, 1), padding='same', name='MaxPool2d_3b_3a_3x3')(x)
-    branch_3 = conv3d_bn(branch_3, 32, 1, 1, 1, padding='same', name='Conv3d_3b_3b_1x1')
+    branch_3 = MaxPooling3D((3, 3, 3), strides=(1, 1, 1), padding='same', name=f'{layer_name}MaxPool2d_3b_3a_3x3')(x)
+    branch_3 = conv3d_bn(branch_3, 32, 1, 1, 1, padding='same', name=f'{layer_name}Conv3d_3b_3b_1x1')
 
     x = layers.concatenate(
         [branch_0, branch_1, branch_2, branch_3],
         axis=channel_axis,
-        name='Mixed_3b')
+        name=f'{layer_name}Mixed_3b')
 
     # Mixed 3c
-    branch_0 = conv3d_bn(x, 128, 1, 1, 1, padding='same', name='Conv3d_3c_0a_1x1')
+    branch_0 = conv3d_bn(x, 128, 1, 1, 1, padding='same', name=f'{layer_name}Conv3d_3c_0a_1x1')
 
-    branch_1 = conv3d_bn(x, 128, 1, 1, 1, padding='same', name='Conv3d_3c_1a_1x1')
-    branch_1 = conv3d_bn(branch_1, 192, 3, 3, 3, padding='same', name='Conv3d_3c_1b_3x3')
+    branch_1 = conv3d_bn(x, 128, 1, 1, 1, padding='same', name=f'{layer_name}Conv3d_3c_1a_1x1')
+    branch_1 = conv3d_bn(branch_1, 192, 3, 3, 3, padding='same', name=f'{layer_name}Conv3d_3c_1b_3x3')
 
-    branch_2 = conv3d_bn(x, 32, 1, 1, 1, padding='same', name='Conv3d_3c_2a_1x1')
-    branch_2 = conv3d_bn(branch_2, 96, 3, 3, 3, padding='same', name='Conv3d_3c_2b_3x3')
+    branch_2 = conv3d_bn(x, 32, 1, 1, 1, padding='same', name=f'{layer_name}Conv3d_3c_2a_1x1')
+    branch_2 = conv3d_bn(branch_2, 96, 3, 3, 3, padding='same', name=f'{layer_name}Conv3d_3c_2b_3x3')
 
-    branch_3 = MaxPooling3D((3, 3, 3), strides=(1, 1, 1), padding='same', name='MaxPool2d_3c_3a_3x3')(x)
-    branch_3 = conv3d_bn(branch_3, 64, 1, 1, 1, padding='same', name='Conv3d_3c_3b_1x1')
+    branch_3 = MaxPooling3D((3, 3, 3), strides=(1, 1, 1), padding='same', name=f'{layer_name}MaxPool2d_3c_3a_3x3')(x)
+    branch_3 = conv3d_bn(branch_3, 64, 1, 1, 1, padding='same', name=f'{layer_name}Conv3d_3c_3b_1x1')
 
     x = layers.concatenate(
         [branch_0, branch_1, branch_2, branch_3],
         axis=channel_axis,
-        name='Mixed_3c')
+        name=f'{layer_name}Mixed_3c')
 
 
     # Downsampling (spatial and temporal)
-    x = MaxPooling3D((3, 3, 3), strides=(2, 2, 2), padding='same', name='MaxPool2d_4a_3x3')(x)
+    x = MaxPooling3D((3, 3, 3), strides=(2, 2, 2), padding='same', name=f'{layer_name}MaxPool2d_4a_3x3')(x)
 
     # Mixed 4b
-    branch_0 = conv3d_bn(x, 192, 1, 1, 1, padding='same', name='Conv3d_4b_0a_1x1')
+    branch_0 = conv3d_bn(x, 192, 1, 1, 1, padding='same', name=f'{layer_name}Conv3d_4b_0a_1x1')
 
-    branch_1 = conv3d_bn(x, 96, 1, 1, 1, padding='same', name='Conv3d_4b_1a_1x1')
-    branch_1 = conv3d_bn(branch_1, 208, 3, 3, 3, padding='same', name='Conv3d_4b_1b_3x3')
+    branch_1 = conv3d_bn(x, 96, 1, 1, 1, padding='same', name=f'{layer_name}Conv3d_4b_1a_1x1')
+    branch_1 = conv3d_bn(branch_1, 208, 3, 3, 3, padding='same', name=f'{layer_name}Conv3d_4b_1b_3x3')
 
-    branch_2 = conv3d_bn(x, 16, 1, 1, 1, padding='same', name='Conv3d_4b_2a_1x1')
-    branch_2 = conv3d_bn(branch_2, 48, 3, 3, 3, padding='same', name='Conv3d_4b_2b_3x3')
+    branch_2 = conv3d_bn(x, 16, 1, 1, 1, padding='same', name=f'{layer_name}Conv3d_4b_2a_1x1')
+    branch_2 = conv3d_bn(branch_2, 48, 3, 3, 3, padding='same', name=f'{layer_name}Conv3d_4b_2b_3x3')
 
-    branch_3 = MaxPooling3D((3, 3, 3), strides=(1, 1, 1), padding='same', name='MaxPool2d_4b_3a_3x3')(x)
-    branch_3 = conv3d_bn(branch_3, 64, 1, 1, 1, padding='same', name='Conv3d_4b_3b_1x1')
+    branch_3 = MaxPooling3D((3, 3, 3), strides=(1, 1, 1), padding='same', name=f'{layer_name}MaxPool2d_4b_3a_3x3')(x)
+    branch_3 = conv3d_bn(branch_3, 64, 1, 1, 1, padding='same', name=f'{layer_name}Conv3d_4b_3b_1x1')
 
     x = layers.concatenate(
         [branch_0, branch_1, branch_2, branch_3],
         axis=channel_axis,
-        name='Mixed_4b')
+        name=f'{layer_name}Mixed_4b')
 
     # Mixed 4c
-    branch_0 = conv3d_bn(x, 160, 1, 1, 1, padding='same', name='Conv3d_4c_0a_1x1')
+    branch_0 = conv3d_bn(x, 160, 1, 1, 1, padding='same', name=f'{layer_name}Conv3d_4c_0a_1x1')
 
-    branch_1 = conv3d_bn(x, 112, 1, 1, 1, padding='same', name='Conv3d_4c_1a_1x1')
-    branch_1 = conv3d_bn(branch_1, 224, 3, 3, 3, padding='same', name='Conv3d_4c_1b_3x3')
+    branch_1 = conv3d_bn(x, 112, 1, 1, 1, padding='same', name=f'{layer_name}Conv3d_4c_1a_1x1')
+    branch_1 = conv3d_bn(branch_1, 224, 3, 3, 3, padding='same', name=f'{layer_name}Conv3d_4c_1b_3x3')
 
-    branch_2 = conv3d_bn(x, 24, 1, 1, 1, padding='same', name='Conv3d_4c_2a_1x1')
-    branch_2 = conv3d_bn(branch_2, 64, 3, 3, 3, padding='same', name='Conv3d_4c_2b_3x3')
+    branch_2 = conv3d_bn(x, 24, 1, 1, 1, padding='same', name=f'{layer_name}Conv3d_4c_2a_1x1')
+    branch_2 = conv3d_bn(branch_2, 64, 3, 3, 3, padding='same', name=f'{layer_name}Conv3d_4c_2b_3x3')
 
-    branch_3 = MaxPooling3D((3, 3, 3), strides=(1, 1, 1), padding='same', name='MaxPool2d_4c_3a_3x3')(x)
-    branch_3 = conv3d_bn(branch_3, 64, 1, 1, 1, padding='same', name='Conv3d_4c_3b_1x1')
+    branch_3 = MaxPooling3D((3, 3, 3), strides=(1, 1, 1), padding='same', name=f'{layer_name}MaxPool2d_4c_3a_3x3')(x)
+    branch_3 = conv3d_bn(branch_3, 64, 1, 1, 1, padding='same', name=f'{layer_name}Conv3d_4c_3b_1x1')
 
     x = layers.concatenate(
         [branch_0, branch_1, branch_2, branch_3],
         axis=channel_axis,
-        name='Mixed_4c')
+        name=f'{layer_name}Mixed_4c')
 
     # Mixed 4d
-    branch_0 = conv3d_bn(x, 128, 1, 1, 1, padding='same', name='Conv3d_4d_0a_1x1')
+    branch_0 = conv3d_bn(x, 128, 1, 1, 1, padding='same', name=f'{layer_name}Conv3d_4d_0a_1x1')
 
-    branch_1 = conv3d_bn(x, 128, 1, 1, 1, padding='same', name='Conv3d_4d_1a_1x1')
-    branch_1 = conv3d_bn(branch_1, 256, 3, 3, 3, padding='same', name='Conv3d_4d_1b_3x3')
+    branch_1 = conv3d_bn(x, 128, 1, 1, 1, padding='same', name=f'{layer_name}Conv3d_4d_1a_1x1')
+    branch_1 = conv3d_bn(branch_1, 256, 3, 3, 3, padding='same', name=f'{layer_name}Conv3d_4d_1b_3x3')
 
-    branch_2 = conv3d_bn(x, 24, 1, 1, 1, padding='same', name='Conv3d_4d_2a_1x1')
-    branch_2 = conv3d_bn(branch_2, 64, 3, 3, 3, padding='same', name='Conv3d_4d_2b_3x3')
+    branch_2 = conv3d_bn(x, 24, 1, 1, 1, padding='same', name=f'{layer_name}Conv3d_4d_2a_1x1')
+    branch_2 = conv3d_bn(branch_2, 64, 3, 3, 3, padding='same', name=f'{layer_name}Conv3d_4d_2b_3x3')
 
-    branch_3 = MaxPooling3D((3, 3, 3), strides=(1, 1, 1), padding='same', name='MaxPool2d_4d_3a_3x3')(x)
-    branch_3 = conv3d_bn(branch_3, 64, 1, 1, 1, padding='same', name='Conv3d_4d_3b_1x1')
+    branch_3 = MaxPooling3D((3, 3, 3), strides=(1, 1, 1), padding='same', name=f'{layer_name}MaxPool2d_4d_3a_3x3')(x)
+    branch_3 = conv3d_bn(branch_3, 64, 1, 1, 1, padding='same', name=f'{layer_name}Conv3d_4d_3b_1x1')
 
     x = layers.concatenate(
         [branch_0, branch_1, branch_2, branch_3],
         axis=channel_axis,
-        name='Mixed_4d')
+        name=f'{layer_name}Mixed_4d')
 
     # Mixed 4e
-    branch_0 = conv3d_bn(x, 112, 1, 1, 1, padding='same', name='Conv3d_4e_0a_1x1')
+    branch_0 = conv3d_bn(x, 112, 1, 1, 1, padding='same', name=f'{layer_name}Conv3d_4e_0a_1x1')
 
-    branch_1 = conv3d_bn(x, 144, 1, 1, 1, padding='same', name='Conv3d_4e_1a_1x1')
-    branch_1 = conv3d_bn(branch_1, 288, 3, 3, 3, padding='same', name='Conv3d_4e_1b_3x3')
+    branch_1 = conv3d_bn(x, 144, 1, 1, 1, padding='same', name=f'{layer_name}Conv3d_4e_1a_1x1')
+    branch_1 = conv3d_bn(branch_1, 288, 3, 3, 3, padding='same', name=f'{layer_name}Conv3d_4e_1b_3x3')
 
-    branch_2 = conv3d_bn(x, 32, 1, 1, 1, padding='same', name='Conv3d_4e_2a_1x1')
-    branch_2 = conv3d_bn(branch_2, 64, 3, 3, 3, padding='same', name='Conv3d_4e_2b_3x3')
+    branch_2 = conv3d_bn(x, 32, 1, 1, 1, padding='same', name=f'{layer_name}Conv3d_4e_2a_1x1')
+    branch_2 = conv3d_bn(branch_2, 64, 3, 3, 3, padding='same', name=f'{layer_name}Conv3d_4e_2b_3x3')
 
-    branch_3 = MaxPooling3D((3, 3, 3), strides=(1, 1, 1), padding='same', name='MaxPool2d_4e_3a_3x3')(x)
-    branch_3 = conv3d_bn(branch_3, 64, 1, 1, 1, padding='same', name='Conv3d_4e_3b_1x1')
+    branch_3 = MaxPooling3D((3, 3, 3), strides=(1, 1, 1), padding='same', name=f'{layer_name}MaxPool2d_4e_3a_3x3')(x)
+    branch_3 = conv3d_bn(branch_3, 64, 1, 1, 1, padding='same', name=f'{layer_name}Conv3d_4e_3b_1x1')
 
     x = layers.concatenate(
         [branch_0, branch_1, branch_2, branch_3],
         axis=channel_axis,
-        name='Mixed_4e')
+        name=f'{layer_name}Mixed_4e')
 
     # Mixed 4f
-    branch_0 = conv3d_bn(x, 256, 1, 1, 1, padding='same', name='Conv3d_4f_0a_1x1')
+    branch_0 = conv3d_bn(x, 256, 1, 1, 1, padding='same', name=f'{layer_name}Conv3d_4f_0a_1x1')
 
-    branch_1 = conv3d_bn(x, 160, 1, 1, 1, padding='same', name='Conv3d_4f_1a_1x1')
-    branch_1 = conv3d_bn(branch_1, 320, 3, 3, 3, padding='same', name='Conv3d_4f_1b_3x3')
+    branch_1 = conv3d_bn(x, 160, 1, 1, 1, padding='same', name=f'{layer_name}Conv3d_4f_1a_1x1')
+    branch_1 = conv3d_bn(branch_1, 320, 3, 3, 3, padding='same', name=f'{layer_name}Conv3d_4f_1b_3x3')
 
-    branch_2 = conv3d_bn(x, 32, 1, 1, 1, padding='same', name='Conv3d_4f_2a_1x1')
-    branch_2 = conv3d_bn(branch_2, 128, 3, 3, 3, padding='same', name='Conv3d_4f_2b_3x3')
+    branch_2 = conv3d_bn(x, 32, 1, 1, 1, padding='same', name=f'{layer_name}Conv3d_4f_2a_1x1')
+    branch_2 = conv3d_bn(branch_2, 128, 3, 3, 3, padding='same', name=f'{layer_name}Conv3d_4f_2b_3x3')
 
-    branch_3 = MaxPooling3D((3, 3, 3), strides=(1, 1, 1), padding='same', name='MaxPool2d_4f_3a_3x3')(x)
-    branch_3 = conv3d_bn(branch_3, 128, 1, 1, 1, padding='same', name='Conv3d_4f_3b_1x1')
+    branch_3 = MaxPooling3D((3, 3, 3), strides=(1, 1, 1), padding='same', name=f'{layer_name}MaxPool2d_4f_3a_3x3')(x)
+    branch_3 = conv3d_bn(branch_3, 128, 1, 1, 1, padding='same', name=f'{layer_name}Conv3d_4f_3b_1x1')
 
     x = layers.concatenate(
         [branch_0, branch_1, branch_2, branch_3],
         axis=channel_axis,
-        name='Mixed_4f')
+        name=f'{layer_name}Mixed_4f')
 
 
     # Downsampling (spatial and temporal)
-    x = MaxPooling3D((2, 2, 2), strides=(2, 2, 2), padding='same', name='MaxPool2d_5a_2x2')(x)
+    x = MaxPooling3D((2, 2, 2), strides=(2, 2, 2), padding='same', name=f'{layer_name}MaxPool2d_5a_2x2')(x)
 
     # Mixed 5b
-    branch_0 = conv3d_bn(x, 256, 1, 1, 1, padding='same', name='Conv3d_5b_0a_1x1')
+    branch_0 = conv3d_bn(x, 256, 1, 1, 1, padding='same', name=f'{layer_name}Conv3d_5b_0a_1x1')
 
-    branch_1 = conv3d_bn(x, 160, 1, 1, 1, padding='same', name='Conv3d_5b_1a_1x1')
-    branch_1 = conv3d_bn(branch_1, 320, 3, 3, 3, padding='same', name='Conv3d_5b_1b_3x3')
+    branch_1 = conv3d_bn(x, 160, 1, 1, 1, padding='same', name=f'{layer_name}Conv3d_5b_1a_1x1')
+    branch_1 = conv3d_bn(branch_1, 320, 3, 3, 3, padding='same', name=f'{layer_name}Conv3d_5b_1b_3x3')
 
-    branch_2 = conv3d_bn(x, 32, 1, 1, 1, padding='same', name='Conv3d_5b_2a_1x1')
-    branch_2 = conv3d_bn(branch_2, 128, 3, 3, 3, padding='same', name='Conv3d_5b_2b_3x3')
+    branch_2 = conv3d_bn(x, 32, 1, 1, 1, padding='same', name=f'{layer_name}Conv3d_5b_2a_1x1')
+    branch_2 = conv3d_bn(branch_2, 128, 3, 3, 3, padding='same', name=f'{layer_name}Conv3d_5b_2b_3x3')
 
-    branch_3 = MaxPooling3D((3, 3, 3), strides=(1, 1, 1), padding='same', name='MaxPool2d_5b_3a_3x3')(x)
-    branch_3 = conv3d_bn(branch_3, 128, 1, 1, 1, padding='same', name='Conv3d_5b_3b_1x1')
+    branch_3 = MaxPooling3D((3, 3, 3), strides=(1, 1, 1), padding='same', name=f'{layer_name}MaxPool2d_5b_3a_3x3')(x)
+    branch_3 = conv3d_bn(branch_3, 128, 1, 1, 1, padding='same', name=f'{layer_name}Conv3d_5b_3b_1x1')
 
     x = layers.concatenate(
         [branch_0, branch_1, branch_2, branch_3],
         axis=channel_axis,
-        name='Mixed_5b')
+        name=f'{layer_name}Mixed_5b')
 
     # Mixed 5c
-    branch_0 = conv3d_bn(x, 384, 1, 1, 1, padding='same', name='Conv3d_5c_0a_1x1')
+    branch_0 = conv3d_bn(x, 384, 1, 1, 1, padding='same', name=f'{layer_name}Conv3d_5c_0a_1x1')
 
-    branch_1 = conv3d_bn(x, 192, 1, 1, 1, padding='same', name='Conv3d_5c_1a_1x1')
-    branch_1 = conv3d_bn(branch_1, 384, 3, 3, 3, padding='same', name='Conv3d_5c_1b_3x3')
+    branch_1 = conv3d_bn(x, 192, 1, 1, 1, padding='same', name=f'{layer_name}Conv3d_5c_1a_1x1')
+    branch_1 = conv3d_bn(branch_1, 384, 3, 3, 3, padding='same', name=f'{layer_name}Conv3d_5c_1b_3x3')
 
-    branch_2 = conv3d_bn(x, 48, 1, 1, 1, padding='same', name='Conv3d_5c_2a_1x1')
-    branch_2 = conv3d_bn(branch_2, 128, 3, 3, 3, padding='same', name='Conv3d_5c_2b_3x3')
+    branch_2 = conv3d_bn(x, 48, 1, 1, 1, padding='same', name=f'{layer_name}Conv3d_5c_2a_1x1')
+    branch_2 = conv3d_bn(branch_2, 128, 3, 3, 3, padding='same', name=f'{layer_name}Conv3d_5c_2b_3x3')
 
-    branch_3 = MaxPooling3D((3, 3, 3), strides=(1, 1, 1), padding='same', name='MaxPool2d_5c_3a_3x3')(x)
-    branch_3 = conv3d_bn(branch_3, 128, 1, 1, 1, padding='same', name='Conv3d_5c_3b_1x1')
+    branch_3 = MaxPooling3D((3, 3, 3), strides=(1, 1, 1), padding='same', name=f'{layer_name}MaxPool2d_5c_3a_3x3')(x)
+    branch_3 = conv3d_bn(branch_3, 128, 1, 1, 1, padding='same', name=f'{layer_name}Conv3d_5c_3b_1x1')
 
     x = layers.concatenate(
         [branch_0, branch_1, branch_2, branch_3],
         axis=channel_axis,
-        name='Mixed_5c')
+        name=f'{layer_name}Mixed_5c')
 
     if include_top:
         # Classification block
-        x = AveragePooling3D((2, 7, 7), strides=(1, 1, 1), padding='valid', name='global_avg_pool')(x)
+        x = AveragePooling3D((2, 7, 7), strides=(1, 1, 1), padding='valid', name=f'{layer_name}global_avg_pool')(x)
         x = Dropout(dropout_prob)(x)
 
         x = conv3d_bn(x, classes, 1, 1, 1, padding='same', 
-                use_bias=True, use_activation_fn=False, use_bn=False, name='Conv3d_6a_1x1')
+                use_bias=True, use_activation_fn=False, use_bn=False, name=f'{layer_name}Conv3d_6a_1x1')
  
         num_frames_remaining = int(x.shape[1])
         x = Reshape((num_frames_remaining, classes))(x)
@@ -512,17 +514,17 @@ def Inception_Inflated3d(include_top=True,
                    output_shape=lambda s: (s[0], s[2]))(x)
 
         if not endpoint_logit:
-            x = Activation('softmax', name='prediction')(x)
+            x = Activation('softmax', name=f'{layer_name}prediction')(x)
     else:
         h = int(x.shape[2])
         w = int(x.shape[3])
-        x = AveragePooling3D((2, h, w), strides=(1, 1, 1), padding='valid', name='global_avg_pool')(x)
+        x = AveragePooling3D((2, h, w), strides=(1, 1, 1), padding='valid', name=f'{layer_name}global_avg_pool')(x)
 
 
 
     inputs = img_input
     # create model
-    model = Model(inputs, x, name='i3d_inception')
+    model = Model(inputs, x, name=f'{layer_name}i3d_inception')
 
     # load weights
     if weights in WEIGHTS_NAME:
@@ -583,7 +585,7 @@ def Inception_Inflated3d(include_top=True,
 """ The following helper functions have been added 
 by https://github.com/FrederikSchorr/sign-language """
 
-def Inception_Inflated3d_Top(input_shape:tuple, classes:int, dropout_prob:bool) -> Model:
+def Inception_Inflated3d_Top(input_shape:tuple, classes:int, dropout_prob:bool, late_fusion:bool=False, layer_name='') -> Model:
     """ Returns adjusted top layers for I3D model, depending on the number of output classes
     """
 
@@ -591,36 +593,81 @@ def Inception_Inflated3d_Top(input_shape:tuple, classes:int, dropout_prob:bool) 
     x = Dropout(dropout_prob)(inputs)
 
     x = conv3d_bn(x, classes, 1, 1, 1, padding='same', 
-            use_bias=True, use_activation_fn=False, use_bn=False, name='Conv3d_6a_1x1')
+            use_bias=True, use_activation_fn=False, use_bn=False, name=f'{layer_name}Conv3d_6a_1x1')
 
     num_frames_remaining = int(x.shape[1])
+    #print(x.shape)
     x = Reshape((num_frames_remaining, classes))(x)
+    #print(x.shape)
+    '''
+    print(type(x))
+    tmp = K.concatenate((x, x), axis=1)
+    print( tmp.shape)
+    print(type(tmp))
+    '''
 
-    # logits (raw scores for each class)
-    x = Lambda(lambda x: K.mean(x, axis=1, keepdims=False),
-                output_shape=lambda s: (s[0], s[2]))(x)
+    
+    if late_fusion:
+        # logits (raw scores for each class)
+        #x = Lambda(lambda x: K.mean(x, axis=1, keepdims=False),
+                    #output_shape=lambda s: (s[0], s[2]))(x)
+        #create graph of new model
+        keModel = Model(inputs = inputs, outputs = x, name = f"{layer_name}i3d_top")
+        return keModel
 
-    # final softmax
-    x = Activation('softmax', name='prediction')(x)
+    else:
+        # logits (raw scores for each class)
+        x = Lambda(lambda x: K.mean(x, axis=1, keepdims=False),
+                    output_shape=lambda s: (s[0], s[2]))(x)
+        #print(x.shape)
+        # final softmax
+        x = Activation('softmax', name='prediction')(x)
+        #create graph of new model
+        keModel = Model(inputs = inputs, outputs = x, name = f"{layer_name}i3d_top")
 
-    #create graph of new model
-    keModel = Model(inputs = inputs, outputs = x, name = "i3d_top")
-
-    return keModel
+        return keModel
 
 
-def add_i3d_top(base_model:Model, classes:int, dropout_prob:bool) -> Model:
+def add_i3d_top(base_model:Model, classes:int, dropout_prob:bool, late_fusion:bool=False, layer_name='') -> Model:
     """ Given an I3D model (without top layers), this function creates the top layers 
     depending on the number of output classes, and returns the entire model.
     """
-
-    top_model = Inception_Inflated3d_Top(base_model.output_shape[1:], classes, dropout_prob)
+    print('final layer of i3d')
+    print(base_model.output_shape)
+    top_model = Inception_Inflated3d_Top(base_model.output_shape[1:], classes, dropout_prob, late_fusion, layer_name)
 
     x = base_model.output
     predictions = top_model(x)
 
-    new_model = Model(base_model.input, predictions, name = "i3d_with_top")
+    new_model = Model(base_model.input, predictions, name = f"{layer_name}i3d_with_top")
 
+    return new_model
+
+
+def Inception_Inflated3d_Fusion(input1_shape:tuple, input2_shape:tuple) -> Model:
+    input1 = Input(shape = input1_shape, name = "input1")
+    input2 = Input(shape = input2_shape, name = "input2")
+    merged = Concatenate(axis=1)([input1, input2])
+    print("Inception_Inflated3d_Fusion shape", merged.shape)
+    x = Lambda(lambda x: K.mean(x, axis=1, keepdims=False),
+            output_shape=lambda s: (s[0], s[2]))(merged)
+    print(x.shape)
+    x = Activation('softmax', name='prediction')(x)
+    print(x.shape)
+    keModel = Model(inputs=[input1, input2], outputs = x, name = "i3d_fusion")
+    return keModel
+
+def model_fusion(base_model:Model, other_model:Model) -> Model:
+
+    print('model_fusion of i3d')
+    print(base_model.output_shape, other_model.output_shape)
+    fusion_model = Inception_Inflated3d_Fusion(base_model.output_shape[1:], other_model.output_shape[1:])
+
+    x1 = base_model.output
+    x2 = other_model.output
+    predictions = fusion_model([x1, x2])
+
+    new_model = Model( inputs=[base_model.input, other_model.input], outputs = predictions, name = "i3d_with_fusion")
     return new_model
 
 
