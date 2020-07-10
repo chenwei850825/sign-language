@@ -24,7 +24,7 @@ from opticalflow import framesDir2flowsDir
 from datagenerator import VideoClasses
 from model_i3d import Inception_Inflated3d, Inception_Inflated3d_Top
 from feature import features_3D_predict_generator
-from train_i3d import train_I3D_oflow_end2end
+from train_i3d import train_I3D_oflow_end2end, train_I3D_combined_end2end, train_I3D_rgb_end2end
 
 # Image and/or Optical flow pipeline
 bImage = False
@@ -43,7 +43,7 @@ bOflow = True
 
 diVideoSet = {"sName" : "tsl",
     "nClasses" : 100,   # number of classes
-    "nFramesNorm" : 200,    # number of frames per video
+    "nFramesNorm" : 40,    # number of frames per video
     "nMinDim" : 240,   # smaller dimension of saved video-frames
     "tuShape" : (600, 480), # height, width
     "nFpsAvg" : 10,

@@ -120,6 +120,8 @@ class FramesGenerator(keras.utils.Sequence):
             # generate data for single video(frames)
             idx = i * 2
             arX[idx,], arY[idx], arX[idx+1,], arY[idx+1] = self.__data_generation(dfVideosBatch.iloc[i,:])
+            #idx = i
+            #arX[idx,], arY[idx]= self.__data_generation(dfVideosBatch.iloc[i,:])
             #print("Sample #%d" % (indexes[i]))
 
         # onehot the labels
@@ -145,6 +147,7 @@ class FramesGenerator(keras.utils.Sequence):
         self.prv_frame_flip = ar_nFrames_flip
         
         return ar_nFrames, seVideo.nLabel, ar_nFrames_flip, seVideo.nLabel
+        #return ar_nFrames, seVideo.nLabel
 
     def data_generation(self, seVideo:pd.Series) -> (np.array(float), int):
         return self.__data_generation(seVideo)
