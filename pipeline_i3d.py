@@ -43,8 +43,8 @@ bOflow = True
 
 diVideoSet = {"sName" : "tsl",
     "nClasses" : 100,   # number of classes
-    "nFramesNorm" : 40,    # number of frames per video
-    "nMinDim" : 240,   # smaller dimension of saved video-frames
+    "nFramesNorm" : 115,    # number of frames per video
+    "nMinDim" : 40,   # smaller dimension of saved video-frames
     "tuShape" : (600, 480), # height, width
     "nFpsAvg" : 10,
     "nFramesAvg" : 50, 

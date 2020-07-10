@@ -110,7 +110,7 @@ def train_I3D_oflow_end2end(diVideoSet):
         
     # Prep logging
     sLog = time.strftime("%Y%m%d-%H%M", time.gmtime()) + \
-        "-%s%03d-oflow-i3d"%(diVideoSet["sName"], diVideoSet["nClasses"])
+        "-%s%03d-%03d-oflow-i3d"%(diVideoSet["sName"], diVideoSet["nClasses"], diVideoSet["nFramesNorm"])
     
     # Helper: Save results
     csv_logger = tf.keras.callbacks.CSVLogger("log_flow_mirror/" + sLog + "-acc_above.csv", append = True)
@@ -218,7 +218,7 @@ def train_I3D_rgb_end2end(diVideoSet):
         
     # Prep logging
     sLog = time.strftime("%Y%m%d-%H%M", time.gmtime()) + \
-        "-%s%03d-oflow-i3d"%(diVideoSet["sName"], diVideoSet["nClasses"])
+        "-%s%03d-%03d-oflow-i3d"%(diVideoSet["sName"], diVideoSet["nClasses"], diVideoSet["nFramesNorm"])
     
     # Helper: Save results
     csv_logger = tf.keras.callbacks.CSVLogger("log_rgb_mirror/" + sLog + "-acc_above.csv", append = True)
