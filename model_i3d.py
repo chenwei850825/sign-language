@@ -681,9 +681,9 @@ def I3D_load(sPath:str, nFramesNorm:int, tuImageShape:tuple, nClasses:int) -> Mo
     tuOutputShape = keModel.output_shape[1:]
     print("Loaded input shape %s, output shape %s" % (str(tuInputShape), str(tuOutputShape)))
 
-    if tuInputShape != ((nFramesNorm, ) + tuImageShape):
-        raise ValueError("Unexpected I3D input shape")
+    if tuInputShape != ((nFramesNorm, ) + tuImageShape) and len(tuInputShape) > 1:
+        raise ValueError(f"Unexpected I3D input shape{((nFramesNorm, ) + tuImageShape)}, {tuInputShape[1:]}")
     if tuOutputShape != (nClasses, ):
-        raise ValueError("Unexpected I3D output shape")
+        raise ValueError(f"Unexpected I3D output shape{(nClasses, )}")
 
     return keModel

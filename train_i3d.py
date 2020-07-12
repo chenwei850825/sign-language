@@ -218,7 +218,7 @@ def train_I3D_rgb_end2end(diVideoSet):
         
     # Prep logging
     sLog = time.strftime("%Y%m%d-%H%M", time.gmtime()) + \
-        "-%s%03d-%03d-oflow-i3d"%(diVideoSet["sName"], diVideoSet["nClasses"], diVideoSet["nFramesNorm"])
+        "-%s%03d-%03d-rgb-i3d"%(diVideoSet["sName"], diVideoSet["nClasses"], diVideoSet["nFramesNorm"])
     
     # Helper: Save results
     csv_logger = tf.keras.callbacks.CSVLogger("log_rgb_mirror/" + sLog + "-acc_above.csv", append = True)
@@ -388,6 +388,9 @@ def train_I3D_combined_end2end(diVideoSet):
         generator = train_gen,
         validation_data = val_gen,
         epochs = diTrainAll["nEpochs"],
+        workers = 4,                 
+        use_multiprocessing = True,
+        max_queue_size = 8, 
         verbose = 1,
         callbacks=[csv_logger, cpAllLast, cpAllBest])
 

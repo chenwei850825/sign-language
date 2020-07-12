@@ -44,7 +44,7 @@ bOflow = True
 diVideoSet = {"sName" : "tsl",
     "nClasses" : 100,   # number of classes
     "nFramesNorm" : 115,    # number of frames per video
-    "nMinDim" : 40,   # smaller dimension of saved video-frames
+    "nMinDim" : 240,   # smaller dimension of saved video-frames
     "tuShape" : (600, 480), # height, width
     "nFpsAvg" : 10,
     "nFramesAvg" : 50, 
@@ -73,7 +73,9 @@ if bOflow:
 
 # train I3D network(s)
 if bOflow:
-    train_I3D_oflow_end2end(diVideoSet)
+        train_I3D_oflow_end2end(diVideoSet)
+        train_I3D_rgb_end2end(diVideoSet)
+        train_I3D_combined_end2end(diVideoSet)
 elif bImage:
     raise ValueError("I3D training with only image data not implemented")
 
