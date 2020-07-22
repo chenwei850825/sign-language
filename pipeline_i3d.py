@@ -54,7 +54,7 @@ diVideoSet = {"sName" : "tsl",
 sFolder = "%03d-%d"%(diVideoSet["nClasses"], diVideoSet["nFramesNorm"])
 sClassFile       = "data-set/%s/%03d/class.csv"%(diVideoSet["sName"], diVideoSet["nClasses"])
 sVideoDir        = "data-set/%s/%03d"%(diVideoSet["sName"], diVideoSet["nClasses"])
-sImageDir        = "data-temp/%s/%s/image"%(diVideoSet["sName"], sFolder)
+sImageDir        = "data-temp/%s/%s/image_diff"%(diVideoSet["sName"], sFolder)
 sImageFeatureDir = "data-temp/%s/%s/image-i3d"%(diVideoSet["sName"], sFolder)
 sOflowDir        = "data-temp/%s/%s/oflow"%(diVideoSet["sName"], sFolder)
 sOflowFeatureDir = "data-temp/%s/%s/oflow-i3d"%(diVideoSet["sName"], sFolder)
@@ -73,7 +73,7 @@ if bOflow:
 
 # train I3D network(s)
 if bOflow:
-        train_I3D_oflow_end2end(diVideoSet)
+        #train_I3D_oflow_end2end(diVideoSet)
         train_I3D_rgb_end2end(diVideoSet)
         train_I3D_combined_end2end(diVideoSet)
 elif bImage:

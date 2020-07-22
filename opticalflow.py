@@ -127,6 +127,12 @@ def frames2flows(arFrames:np.array(int), sAlgorithm = "tvl1-fast", bThirdChannel
     for i in range(len(arFrames)):
         # calc dense optical flow
         arFlow = oOpticalFlow.next(arFrames[i, ...])
+        hsv = np.zeros_like(arFlow)
+        hsv[...,1] = 255
+        mag, ang = cv2.cartToPolar(arFlow[...,0], arFlow[...,1])
+        hsv[...,0] = ang*180/np.pi/2
+        hsv[...,2] = cv2.normalize(mag,None,0,255,cv2.NORM_MINMAX)
+        #arFlow = cv2.cvtColor(hsv,cv2.COLOR_HSV2BGR)
         liFlows.append(arFlow)
         if bShow:
             cv2.imshow("Optical flow", flow2colorimage(arFlow))

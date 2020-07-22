@@ -54,7 +54,7 @@ def video2frames(sVideoPath:str, nResizeMinDim:int) -> np.array:
     if (oVideo.isOpened() == False): raise ValueError("Error opening video file")
 
     liFrames = []
-
+    prvs = None
     # Read until video is completed
     while(True):
         
@@ -65,8 +65,14 @@ def video2frames(sVideoPath:str, nResizeMinDim:int) -> np.array:
             # resize image
             arFrameResized = image_resize_aspectratio(arFrame, nResizeMinDim)
 
+        if prvs is None:
+            prvs =  cv2.cvtColor(arFrameResized,cv2.COLOR_BGR2GRAY)
+        current = cv2.cvtColor(arFrameResized,cv2.COLOR_BGR2GRAY)
+        diff_frame = cv2.absdiff(prvs, current)
+        diff_frame_rgb = cv2.cvtColor(diff_frame, cv2.COLOR_GRAY2BGR)
 		# Save the resulting frame to list
-        liFrames.append(arFrameResized)
+        liFrames.append(diff_frame_rgb)
+        prvs = current
    
     return np.array(liFrames)
 
