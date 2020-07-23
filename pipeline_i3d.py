@@ -74,7 +74,7 @@ if bOflow:
 # train I3D network(s)
 if bOflow:
         #train_I3D_oflow_end2end(diVideoSet)
-        train_I3D_rgb_end2end(diVideoSet)
+        train_I3D_rgb_end2end(diVideoSet, method='bgSub')
         #train_I3D_combined_end2end(diVideoSet)
 elif bImage:
     raise ValueError("I3D training with only image data not implemented")
