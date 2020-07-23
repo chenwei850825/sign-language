@@ -41,7 +41,7 @@ def images_resize_aspectratio(arImages: np.array, nMinDim:int = 256) -> np.array
     return np.array(liImages)
     
 
-def video2frames(sVideoPath:str, nResizeMinDim:int) -> np.array:
+def video2frames(sVideoPath:str, nResizeMinDim:int, method:str='rgb') -> np.array:
     """ Read video file with OpenCV and return array of frames
     The frame rate depends on the video (and cannot be set)
 
@@ -56,6 +56,7 @@ def video2frames(sVideoPath:str, nResizeMinDim:int) -> np.array:
     liFrames = []
     prvs = None
     # Read until video is completed
+    bgSubtractor = cv2.createBackgroundSubtractorMOG2(history=150, varThreshold=16, detectShadows=False)
     while(True):
         
         (bGrabbed, arFrame) = oVideo.read()
@@ -65,13 +66,23 @@ def video2frames(sVideoPath:str, nResizeMinDim:int) -> np.array:
             # resize image
             arFrameResized = image_resize_aspectratio(arFrame, nResizeMinDim)
 
+
         if prvs is None:
             prvs =  cv2.cvtColor(arFrameResized,cv2.COLOR_BGR2GRAY)
         current = cv2.cvtColor(arFrameResized,cv2.COLOR_BGR2GRAY)
         diff_frame = cv2.absdiff(prvs, current)
         diff_frame_rgb = cv2.cvtColor(diff_frame, cv2.COLOR_GRAY2BGR)
+
+        fgmask = bgSubtractor.apply(current, learningRate=-1)    
+        fgmask_rgb = cv2.cvtColor(fgmask, cv2.COLOR_GRAY2BGR)
+
 		# Save the resulting frame to list
-        liFrames.append(diff_frame_rgb)
+        if method == 'rgb':
+            liFrames.append(arFrameResized)
+        elif method == 'diff':
+            liFrames.append(diff_frame_rgb)
+        elif method == 'bgSub':
+            liFrames.append(fgmask_rgb)
         prvs = current
    
     return np.array(liFrames)
@@ -203,7 +214,7 @@ def video_length(sVideoPath:str) -> float:
 
 
 def videosDir2framesDir(sVideoDir:str, sFrameDir:str, nFramesNorm:int = None, 
-    nResizeMinDim:int = None, tuCropShape:tuple = None, nClasses:int = None):
+    nResizeMinDim:int = None, tuCropShape:tuple = None, nClasses:int = None, method:str='rgb'):
     """ Extract frames from videos 
     
     Input video structure:
@@ -256,7 +267,7 @@ def videosDir2framesDir(sVideoDir:str, sFrameDir:str, nFramesNorm:int = None,
         os.makedirs(sTargetDir, exist_ok = True)
 
         # slice videos into frames with OpenCV
-        arFrames = video2frames(sVideoPath, nResizeMinDim)
+        arFrames = video2frames(sVideoPath, nResizeMinDim, method)
 
         # length and fps
         fVideoSec = video_length(sVideoPath)

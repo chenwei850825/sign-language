@@ -177,7 +177,7 @@ def train_I3D_rgb_end2end(diVideoSet):
     sFolder = "%03d-%d"%(diVideoSet["nClasses"], diVideoSet["nFramesNorm"])
     sClassFile       = "data-set/%s/%03d/class.csv"%(diVideoSet["sName"], diVideoSet["nClasses"])
     #sVideoDir        = "data-set/%s/%03d"%(diVideoSet["sName"], diVideoSet["nClasses"])
-    sImageDir        = "data-temp/%s/%s/image"%(diVideoSet["sName"], sFolder)
+    sImageDir        = "data-temp/%s/%s/image_bgSub"%(diVideoSet["sName"], sFolder)
     #sImageFeatureDir = "data-temp/%s/%s/image-i3d"%(diVideoSet["sName"], sFolder)
     #sOflowDir        = "data-temp/%s/%s/oflow"%(diVideoSet["sName"], sFolder)
     #sOflowFeatureDir = "data-temp/%s/%s/oflow-i3d"%(diVideoSet["sName"], sFolder)
