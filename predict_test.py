@@ -24,13 +24,13 @@ frames_num = 115
 #==== model input type
 #sModelFile = "model_flow_mirror/20200706-0517-tsl100-oflow-i3d-entire-best.h5"
 #sModelFile = "model_rgb_mirror/20200711-0410-tsl100-115-oflow-i3d-entire-best.h5"
-sModelFile = "model_combined_mirror/20200711-1058-tsl100-115-combined-i3d-entire-best.h5"
+sModelFile = "model_combined_mirror/115_rgb.h5"
 #==== model load
 h, w = 224, 224
 keI3D = I3D_load(sModelFile, frames_num, (h, w, 2), 63)
 #keI3D = I3D_load(sModelFile, frames_num, (h, w, 3), 63)
 #keI3D = I3D_load(sModelFile, frames_num, (h, w, 2), 63)
-input_type = 'combined'
+input_type = 'combined_test'
 
 
 sFolder = "%03d-%d"%(100, frames_num)

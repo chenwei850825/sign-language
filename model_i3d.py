@@ -209,7 +209,6 @@ def conv3d_bn(x,
     else:
         bn_name = None
         conv_name = None
-
     x = Conv3D(
         filters, (num_frames, num_row, num_col),
         strides=strides,

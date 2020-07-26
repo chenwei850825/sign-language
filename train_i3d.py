@@ -18,6 +18,8 @@ from keras import backend as K
 from datagenerator import VideoClasses, FramesGenerator, generate_generator_multiple
 from model_i3d import Inception_Inflated3d, add_i3d_top, model_fusion
 import tensorflow as tf
+from keras.models import Model, load_model
+
 
 def layers_freeze(keModel:keras.Model) -> keras.Model:
     
@@ -349,7 +351,7 @@ def train_I3D_combined_end2end(diVideoSet, method='rgb'):
 
     # Prep logging
     sLog = time.strftime("%Y%m%d-%H%M", time.gmtime()) + \
-        "-%s%03d-%03d-combined-i3d"%(diVideoSet["sName"], diVideoSet["nClasses"], diVideoSet["nFramesNorm"])
+        "-%s%03dclass-%03dframe-combined-%s-i3d"%(diVideoSet["sName"], diVideoSet["nClasses"], diVideoSet["nFramesNorm"], method)
     
     # Helper: Save results
     csv_logger = tf.keras.callbacks.CSVLogger("log_combined_mirror/" + sLog + "-acc_above.csv", append = True)
@@ -377,7 +379,7 @@ def train_I3D_combined_end2end(diVideoSet, method='rgb'):
         validation_data = val_gen,
         epochs = diTrainTop["nEpochs"],
         workers = 4,                 
-        use_multiprocessing = True,
+        use_multiprocessing = False,
         max_queue_size = 8, 
         verbose = 1,
         callbacks=[csv_logger, cpTopLast, cpTopBest])
@@ -395,7 +397,78 @@ def train_I3D_combined_end2end(diVideoSet, method='rgb'):
         validation_data = val_gen,
         epochs = diTrainAll["nEpochs"],
         workers = 4,                 
-        use_multiprocessing = True,
+        use_multiprocessing = False,
+        max_queue_size = 8, 
+        verbose = 1,
+        callbacks=[csv_logger, cpAllLast, cpAllBest])
+
+    return
+
+def mnodel_fine_tune(diVideoSet, method='rgb'):
+   # directories
+    sFolder = "%03d-%d"%(diVideoSet["nClasses"], diVideoSet["nFramesNorm"])
+    sClassFile       = "data-set/%s/%03d/class.csv"%(diVideoSet["sName"], diVideoSet["nClasses"])
+    #sVideoDir        = "data-set/%s/%03d"%(diVideoSet["sName"], diVideoSet["nClasses"])
+    if method == 'rgb':
+        sImageDir        = "data-temp/%s/%s/image"%(diVideoSet["sName"], sFolder)
+    else:
+        sImageDir        = f"data-temp/%s/%s/image_{method}"%(diVideoSet["sName"], sFolder)
+    #sImageFeatureDir = "data-temp/%s/%s/image-i3d"%(diVideoSet["sName"], sFolder)
+    sOflowDir        = "data-temp/%s/%s/oflow"%(diVideoSet["sName"], sFolder)
+    #sOflowFeatureDir = "data-temp/%s/%s/oflow-i3d"%(diVideoSet["sName"], sFolder)
+    sModelDir        = "model_combined_mirror"
+
+    diTrainTop = {
+        "fLearn" : 1e-3,
+        "nEpochs" : 3}
+
+    diTrainAll = {
+        "fLearn" : 1e-4,
+        "nEpochs" : 5}
+
+    nBatchSize = 1
+
+    print("\nStarting I3D end2end training ...")
+    print(os.getcwd())
+
+    # read the ChaLearn classes
+    #oClasses = VideoClasses(sClassFile)
+
+    # Load training data
+    genFramesTrain_flow = FramesGenerator(sOflowDir + "/train_videos", nBatchSize, 
+        diVideoSet["nFramesNorm"], 224, 224, 2, bShuffle=False)
+    genFramesVal_flow = FramesGenerator(sOflowDir + "/val_videos", nBatchSize, 
+        diVideoSet["nFramesNorm"], 224, 224, 2, bShuffle=False)
+    genFramesTrain_rgb = FramesGenerator(sImageDir + "/train_videos", nBatchSize, 
+        diVideoSet["nFramesNorm"], 224, 224, 3, bShuffle=False)
+    genFramesVal_rgb = FramesGenerator(sImageDir + "/val_videos", nBatchSize, 
+        diVideoSet["nFramesNorm"], 224, 224, 3, bShuffle=False)
+
+
+        # Prep logging
+    sLog = time.strftime("%Y%m%d-%H%M", time.gmtime()) + \
+        "-%s%03d-%03d-combined-i3d"%(diVideoSet["sName"], diVideoSet["nClasses"], diVideoSet["nFramesNorm"])
+    
+    cpAllLast = tf.keras.callbacks.ModelCheckpoint(filepath = sModelDir + "/" + sLog + "-entire-last.h5", verbose = 0)
+    cpAllBest = tf.keras.callbacks.ModelCheckpoint(filepath = sModelDir + "/" + sLog + "-entire-best.h5",
+        verbose = 1, save_best_only = True)
+
+    keI3Dfusion = load_model('model_combined_mirror/20200723-1559-tsl100-115-combined-i3d-entire-best.h5')
+    train_gen = generate_generator_multiple(genFramesTrain_rgb, genFramesTrain_flow)
+    val_gen = generate_generator_multiple(genFramesVal_rgb, genFramesVal_flow)
+
+    print("Finetune all I3D layers with generator: %s" % (diTrainAll))
+    csv_logger = tf.keras.callbacks.CSVLogger("log_combined_mirror/" + sLog + "-acc_entire.csv", append = True)   
+    optimizer = keras.optimizers.Adam(lr = diTrainAll["fLearn"])
+    keI3Dfusion.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
+    count_params(keI3Dfusion) 
+
+    keI3Dfusion.fit_generator(
+        generator = train_gen,
+        validation_data = val_gen,
+        epochs = diTrainAll["nEpochs"],
+        workers = 4,                 
+        use_multiprocessing = False,
         max_queue_size = 8, 
         verbose = 1,
         callbacks=[csv_logger, cpAllLast, cpAllBest])
@@ -415,9 +488,10 @@ if __name__ == '__main__':
         "fDurationAvg" : 3.0} # seconds
     """
 
+    
     diVideoSet = {"sName" : "tsl",
     "nClasses" : 100,   # number of classes
-    "nFramesNorm" : 200,    # number of frames per video
+    "nFramesNorm" : 115,    # number of frames per video
     "nMinDim" : 240,   # smaller dimension of saved video-frames
     "tuShape" : (600, 480), # height, width
     "nFpsAvg" : 10,
@@ -434,4 +508,5 @@ if __name__ == '__main__':
     
     #train_I3D_rgb_end2end(diVideoSet)
     #train_I3D_oflow_end2end(diVideoSet)
-    train_I3D_combined_end2end(diVideoSet)
+    #train_I3D_combined_end2end(diVideoSet)
+    mnodel_fine_tune(diVideoSet, method='bgSub')

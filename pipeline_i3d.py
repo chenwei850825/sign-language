@@ -1,10 +1,8 @@
 """
 https://github.com/FrederikSchorr/sign-language
-
 Assume videos are stored: 
 ... sVideoDir / train / class001 / gesture0027.mp4
 ... sVideoDir / val   / class249 / gesture1069.avi
-
 This pipeline
 * extracts frames=images from videos (training + validation)
 * calculates optical flow
@@ -54,7 +52,7 @@ diVideoSet = {"sName" : "tsl",
 sFolder = "%03d-%d"%(diVideoSet["nClasses"], diVideoSet["nFramesNorm"])
 sClassFile       = "data-set/%s/%03d/class.csv"%(diVideoSet["sName"], diVideoSet["nClasses"])
 sVideoDir        = "data-set/%s/%03d"%(diVideoSet["sName"], diVideoSet["nClasses"])
-sImageDir        = "data-temp/%s/%s/image_bgSub"%(diVideoSet["sName"], sFolder)
+sImageDir        = "data-temp/%s/%s/image"%(diVideoSet["sName"], sFolder)
 sImageFeatureDir = "data-temp/%s/%s/image-i3d"%(diVideoSet["sName"], sFolder)
 sOflowDir        = "data-temp/%s/%s/oflow"%(diVideoSet["sName"], sFolder)
 sOflowFeatureDir = "data-temp/%s/%s/oflow-i3d"%(diVideoSet["sName"], sFolder)
@@ -65,7 +63,7 @@ print(os.getcwd())
 # extract frames from videos
 if bImage or bOflow:
     videosDir2framesDir(sVideoDir, sImageDir, nFramesNorm = diVideoSet["nFramesNorm"],
-        nResizeMinDim = diVideoSet["nMinDim"], tuCropShape = None, method='bgSub')
+        nResizeMinDim = diVideoSet["nMinDim"], tuCropShape = None, method='rgb')
 
 # calculate optical flow
 if bOflow:
@@ -74,8 +72,8 @@ if bOflow:
 # train I3D network(s)
 if bOflow:
         #train_I3D_oflow_end2end(diVideoSet)
-        train_I3D_rgb_end2end(diVideoSet, method='bgSub')
-        #train_I3D_combined_end2end(diVideoSet)
+        #train_I3D_rgb_end2end(diVideoSet, method='bgSub')
+        train_I3D_combined_end2end(diVideoSet)
 elif bImage:
     raise ValueError("I3D training with only image data not implemented")
 
